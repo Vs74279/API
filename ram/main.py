@@ -68,7 +68,7 @@ def update(id,request : schemas.Student,db :Session =Depends(get_db)):
     db.refresh(student)
     return student
 
-@app.post('/user')
+@app.post('/user',tags=['user'])
 def register(request:schemas.User,db :Session =Depends(get_db)):
     hashed_password=pwd_context.hash(request.password)
     user=models.User(username=request.username,password=hashed_password,role=request.role)
@@ -76,7 +76,7 @@ def register(request:schemas.User,db :Session =Depends(get_db)):
     db.commit()
     db.refresh(user)
     return user
-@app.post("/login")
+@app.post("/login",tags=['user'])
 def login(request: schemas.Login, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.username == request.username).first()
     if not user or not verify_password(request.password, user.password):
