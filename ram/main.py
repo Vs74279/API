@@ -1,12 +1,27 @@
 from fastapi import FastAPI,Depends,HTTPException,status
-
+from datetime import datetime, timedelta
 from . import schemas,models
 from .database import engine,SessionLocal
 from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+
+
 app= FastAPI()
 
 
 models.Base.metadata.create_all(bind=engine)
+
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+# T
 
 def get_db():
     db=SessionLocal()
@@ -53,6 +68,27 @@ def update(id,request : schemas.Student,db :Session =Depends(get_db)):
     db.refresh(student)
     return student
 
+@app.post('/user')
+def register(request:schemas.User,db :Session =Depends(get_db)):
+    hashed_password=pwd_context.hash(request.password)
+    user=models.User(username=request.username,password=hashed_password,role=request.role)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+@app.post("/login")
+def login(request: schemas.Login, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.username == request.username).first()
+    if not user or not verify_password(request.password, user.password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return user
+    
+   
+
 
 
 
@@ -94,6 +130,7 @@ def update(id,request : schemas.Task,db :Session =Depends(get_db)):
     db.commit()
     db.refresh(task)
     return task
+
 
 
 

@@ -6,3 +6,12 @@ class Student(BaseModel):
 
 class Task(BaseModel):
        title : str 
+
+class User(BaseModel):
+    username: str
+    password: str
+    role: str
+
+class Login(BaseModel):
+    username: str
+    password: str
